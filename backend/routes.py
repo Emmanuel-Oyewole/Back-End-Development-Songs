@@ -127,6 +127,23 @@ def update_song(id):
     else:
         return jsonify({"message": "song not found"}), 404
 
+@app.route("/song/<int:id>", methods=["DELETE"])
+def delete_song(id):
+    # Find the song by `id` in the songs list
+    find_song = next((song for song in songs_list if int(song['id']) == id), None)
+    
+    if find_song:
+        # Delete the song from the database using the custom `id` field
+        delete_result = db.songs.delete_one({'id': find_song['id']})
+        
+        # Check if a document was actually deleted
+        if delete_result.deleted_count > 0:
+            return '',204
+        else:
+            return jsonify({"message": "song not found"}), 404
+    else:
+        return jsonify({"message": "song not found"}), 404
+
 
 
 
