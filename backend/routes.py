@@ -94,25 +94,43 @@ def create_song():
             "message": f"Song with {song_data['id']} already present."
         }), 302
 
+
 @app.route("/song/<int:id>", methods=["PUT"])
 def update_song(id):
     song_data = request.json
     existing_song = next((song for song in songs_list if int(song['id']) == id), None)
+    
     if existing_song:
-        title_updated song_data.get("title") != existing_song["title"]
-        lyrics_updated song_data.get('lyrics') != existing_song['lyrics']
-
-        if not title_updated and not lyrics_updated:
-            return jsonify({"message": "song found, but nothing to update"}),
-
-        db.songs.update_one(
-            {'_id': existing_song['id']},
-            {'$set':{
-                'title': song_data.get('title', existing_song['_id']),
-                'lyrics': song_data.get('lyrics', existing_song['lyrics'])
+        update_result = db.songs.update_one(
+            {'id': existing_song['id']},
+            {'$set': {
+                'title': song_data.get("title", existing_song["title"]),
+                'lyrics': song_data.get("lyrics", existing_song["lyrics"])
             }}
         )
-        return jsonify({"message": "succesful"}), 201
+
+        if update_result.modified_count == 0:
+            return jsonify({"message": "song found but nothing updated"}), 200
+
+        updated_song = db.songs.find_one({'id': existing_song['id']})
+        
+        if updated_song:
+            response_data = {
+                "_id": {"$oid": str(updated_song["_id"])},
+                "id": updated_song["id"],
+                "lyrics": updated_song["lyrics"],
+                "title": updated_song["title"]
+            }
+            return jsonify(response_data), 201
+        else:
+            return jsonify({"message": "updated song not found"}), 404
+    else:
+        return jsonify({"message": "song not found"}), 404
+
+
+
+
+
 
 
 
