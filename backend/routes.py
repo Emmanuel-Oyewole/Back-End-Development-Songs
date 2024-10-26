@@ -60,3 +60,60 @@ def count():
     if songs_list:
         return jsonify(count=len(songs_list)), 200
     return jsonify({"message": "Internal server error"}), 500
+
+
+
+@app.route("/song", methods=["GET"])
+def songs():
+    all_songs = list(db.songs.find({}))  # Fetch and convert cursor to list
+    for song in all_songs:
+        # Format _id as nested dictionary with "$oid" key
+        song["_id"] = {"$oid": str(song["_id"])}
+    return jsonify({"songs": all_songs}), 200
+
+
+@app.route("/song", methods=["POST"])
+def create_song():
+    song_data = request.json 
+    inserted_id = str(ObjectId())
+
+    song = next((item for item in songs_list if int(item['id']) == int(song_data['id'])), None)
+
+    if not song:
+        song_data['_id'] = {"$oid": inserted_id}
+        songs_list.append(song_data)
+        
+        response = {
+            "inserted id": {
+                "$oid": inserted_id
+            }
+        }
+        return jsonify(response), 201
+    else:
+        return jsonify({
+            "message": f"Song with {song_data['id']} already present."
+        }), 302
+
+@app.route("/song/<int:id>", methods=["PUT"])
+def update_song(id):
+    song_data = request.json
+    existing_song = next((song for song in songs_list if int(song['id']) == id), None)
+    if existing_song:
+        title_updated song_data.get("title") != existing_song["title"]
+        lyrics_updated song_data.get('lyrics') != existing_song['lyrics']
+
+        if not title_updated and not lyrics_updated:
+            return jsonify({"message": "song found, but nothing to update"}),
+
+        db.songs.update_one(
+            {'_id': existing_song['id']},
+            {'$set':{
+                'title': song_data.get('title', existing_song['_id']),
+                'lyrics': song_data.get('lyrics', existing_song['lyrics'])
+            }}
+        )
+        return jsonify({"message": "succesful"}), 201
+
+
+
+
